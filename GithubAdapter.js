@@ -38,18 +38,30 @@ var adapter = module.exports = {
 		cb();
 	},
 
+	// Create an entried of :attribute
+	create: function(collectionName, options, cb) {
+		console.log(this);
+		console.log(options);
+	},
+
 	// Find All entries of :attribute
-	findAll: function(collectionName, options, cb) {
-		if (!options.attribute) return cb('Please findAll({ attribute: "Attribute Wanted" })');
+	find: function(collectionName, options, cb) {
+		console.log(this);
+		console.log(options);
+		if (!options.where.attribute) return cb('Please findAll({ attribute: "Attribute Wanted" })');
 
 		var client = adapter.configurations[collectionName];
 		var user   = client.user(client._user);
 		if (client._type === 'repo') {
-			var repo = client.repo(user+'/'+client._repo);
-			switch (options.attribute) {
-				case (info) :
-					repo.info(function(res){
-						console.log(res);
+			var repo = client.repo(client._user+'/'+client._repo);
+			switch (options.where.attribute) {
+				case ('info') :
+					repo.info(function(err, res){
+						if (err) {
+							console.log(err);
+							cb(err);
+						}
+						cb(null, res);
 					});
 					break;
 			}
@@ -73,4 +85,6 @@ function init(collection, cb) {
 	if (collection.repo) {
 		adapter.configurations[collection.identity]._repo = collection.repo;
 	}
+
+	if (cb) return cb(null, client);
 }
