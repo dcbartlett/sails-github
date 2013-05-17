@@ -3,51 +3,36 @@
 	-> adapter
 ---------------------------------------------------------------*/
 
-var async = require('async'),
-		github = require('octonode'),
-		_ = require('underscore');
-
-_.str = require('underscore.string');
+var github = require('octonode');
 
 var adapter = module.exports = {
 
-	syncable: false,
-
-	configurations: {},
-
-	defaults: {},
+	connections: {},
 
 	// This method runs when a model is initially registered at server start time
 	registerCollection: function(collection, cb) {
 
-		// Requre that the Type were specified
-		//   Types: user, repo
-		// TODO: org, gist, team, search, me/self
-		if (!collection.type) return cb('No Type specified (e.g. gists)');
-		if (!collection.user) return cb('No User specified (e.g. balderdashy)');
-		if (collection.type === 'repo') {
-			if (!collection.repo) return cb('No Repository specified (e.g. sails)');
-		}
-
-		init(collection, cb);
-	},
-
-	// Optional hook fired when a model is unregistered, typically at server halt
-	// useful for tearing down remaining open connections, etc.
-	teardown: function(cb) {
+		this.connections[collection.identity] = {
+			api: new github({});
+		};
 		cb();
-	},
-
-	// Create an entried of :attribute
-	create: function(collectionName, options, cb) {
-		console.log(this);
-		console.log(options);
 	},
 
 	// Find All entries of :attribute
 	find: function(collectionName, options, cb) {
 		console.log(this);
 		console.log(options);
+		var criteria = options.where || {};
+
+		switch(collectionName){
+			case 'users' : return this.getUser(collectionName, criteria, afterwards);
+			case 'repos' : return this.getUser(collectionName, criteria, afterwards);;
+			case 'orgs'  : return this.getUser(collectionName, criteria, afterwards);;
+			case 'gists' : return this.getUser(collectionName, criteria, afterwards);;
+			case 'teams' : return this.getUser(collectionName, criteria, afterwards);;
+			default: return afterwards('Unkown usage of find() with model ('+ collectionName +') ')
+		}
+
 		if (!options.where.attribute) return cb('Please findAll({ attribute: "Attribute Wanted" })');
 
 		var client = adapter.configurations[collectionName];
@@ -69,22 +54,11 @@ var adapter = module.exports = {
 			cb();
 		}
 
+	},
+
+	// Create an entried of :attribute
+	create: function(collectionName, options, cb) {
+		console.log(this);
+		console.log(options);
 	}
 };
-
-//////////////                 //////////////////////////////////////////
-////////////// Private Methods //////////////////////////////////////////
-//////////////                 //////////////////////////////////////////
-
-function init(collection, cb) {
-	var client = new github.client();
-
-	adapter.configurations[collection.identity] = client;
-	adapter.configurations[collection.identity]._type = collection.type;
-	adapter.configurations[collection.identity]._user = collection.user;
-	if (collection.repo) {
-		adapter.configurations[collection.identity]._repo = collection.repo;
-	}
-
-	if (cb) return cb(null, client);
-}
